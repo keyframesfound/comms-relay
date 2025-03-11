@@ -13,6 +13,8 @@
         .container { padding: 20px; }
         .video { width: 45%; margin: 2.5%; }
     </style>
+    <!-- Added A-Frame library -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
 </head>
 <body>
     <div class="navbar">
@@ -22,12 +24,37 @@
     </div>
     <div class="container">
         {% if tab == 'cameras' %}
-            <!-- Cameras tab: display two video streams side by side -->
-            <h2>Cameras</h2>
-            <div style="display: flex; justify-content: center; align-items: center;">
-                <img class="video" src="{{ url_for('video_feed', cam_id=0) }}" alt="Camera 0">
-                <img class="video" src="{{ url_for('video_feed', cam_id=1) }}" alt="Camera 1">
-            </div>
+            <!-- Cameras tab changed: rendering a live 360 videosphere -->
+            <h2>360 Videosphere</h2>
+            <a-scene embedded>
+                <a-assets>
+                    <canvas id="videoCanvas"></canvas>
+                </a-assets>
+                <a-sky id="videoSphere" src="#videoCanvas" rotation="0 -90 0"></a-sky>
+                <a-camera></a-camera>
+            </a-scene>
+            <!-- Hidden video elements for the two feeds -->
+            <video id="video0" src="{{ url_for('video_feed', cam_id=0) }}" autoplay muted loop playsinline style="display:none"></video>
+            <video id="video1" src="{{ url_for('video_feed', cam_id=1) }}" autoplay muted loop playsinline style="display:none"></video>
+            <script>
+                // Stitching the two video feeds into one canvas
+                const v0 = document.getElementById("video0");
+                const v1 = document.getElementById("video1");
+                const canvas = document.getElementById("videoCanvas");
+                const ctx = canvas.getContext("2d");
+                // Assuming each video is 640x480; canvas is 1280x480
+                canvas.width = 1280;
+                canvas.height = 480;
+                function draw() {
+                    if(v0.readyState >= 2 && v1.readyState >= 2) {
+                        // Draw left half from v0 and right half from v1.
+                        ctx.drawImage(v0, 0, 0, 640, 480);
+                        ctx.drawImage(v1, 640, 0, 640, 480);
+                    }
+                    requestAnimationFrame(draw);
+                }
+                draw();
+            </script>
         {% elif tab == 'stats' %}
             <!-- Raspberry Pi stats tab: display CPU, memory, and temperature -->
             <h2>Raspberry Pi Stats</h2>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Raspberry Pi Video & Stats</title>
+    <style>
+        /* Basic styling */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .navbar { overflow: hidden; background-color: #333; }
+        .navbar a { float: left; display: block; color: #f2f2f2; 
+                    text-align: center; padding: 14px 16px; text-decoration: none; }
+        .navbar a:hover { background-color: #ddd; color: black; }
+        .container { padding: 20px; }
+        .video { width: 45%; margin: 2.5%; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/?tab=cameras">Cameras</a>
+        <a href="/?tab=empty">Empty</a>
+        <a href="/?tab=stats">Raspberry Pi Stats</a>
+    </div>
+    <div class="container">
+        {% if tab == 'cameras' %}
+            <!-- Cameras tab: display two video streams side by side -->
+            <h2>Cameras</h2>
+            <div style="display: flex; justify-content: center; align-items: center;">
+                <img class="video" src="{{ url_for('video_feed', cam_id=0) }}" alt="Camera 0">
+                <img class="video" src="{{ url_for('video_feed', cam_id=1) }}" alt="Camera 1">
+            </div>
+        {% elif tab == 'stats' %}
+            <!-- Raspberry Pi stats tab: display CPU, memory, temperature, and disk usage -->
+            <h2>Raspberry Pi Stats</h2>
+            <p>CPU Usage: {{ stats.cpu_percent }}%</p>
+            <p>Temperature: {{ stats.temperature }}°C</p>
+            <p>Memory Stats:</p>
+            <ul>
+                <li>Total: {{ stats.memory.total // (1024*1024) }} MB</li>
+                <li>Available: {{ stats.memory.available // (1024*1024) }} MB</li>
+                <li>Used: {{ stats.memory.used // (1024*1024) }} MB</li>
+                <li>Percent Used: {{ stats.memory.percent }}%</li>
+            </ul>
+            <p>Disk Usage:</p>
+            <ul>
+                <li>Total: {{ stats.disk.total // (1024*1024*1024) }} GB</li>
+                <li>Used: {{ stats.disk.used // (1024*1024*1024) }} GB</li>
+                <li>Free: {{ stats.disk.free // (1024*1024*1024) }} GB</li>
+                <li>Percent Used: {{ stats.disk.percent }}%</li>
+            </ul>
+            <p id="countdown">Next update in: 3.0 seconds</p>
+            <script>
+                // Countdown refresh script
+                let countdownElement = document.getElementById("countdown");
+                let countdown = 3.0;
+                let interval = setInterval(function(){
+                    countdown -= 0.1;
+                    if (countdown <= 0) {
+                        clearInterval(interval);
+                        window.location.reload();
+                    } else {
+                        countdownElement.textContent = "Next update in: " + countdown.toFixed(1) + " seconds";
+                    }
+                }, 100);
+            </script>
+        {% else %}
+            <!-- Placeholder for empty tab -->
+            <h2>Empty Tab</h2>
+            <p>Content coming soon!</p>
+        {% endif %}
+    </div>
+</body>
+</html>

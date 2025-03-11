@@ -29,7 +29,7 @@
                 <img class="video" src="{{ url_for('video_feed', cam_id=1) }}" alt="Camera 1">
             </div>
         {% elif tab == 'stats' %}
-            <!-- Raspberry Pi stats tab: display CPU, memory, temperature, and disk usage -->
+            <!-- Raspberry Pi stats tab: display CPU, memory, and temperature -->
             <h2>Raspberry Pi Stats</h2>
             <p>CPU Usage: {{ stats.cpu_percent }}%</p>
             <p>Temperature: {{ stats.temperature }}°C</p>
@@ -39,13 +39,6 @@
                 <li>Available: {{ stats.memory.available // (1024*1024) }} MB</li>
                 <li>Used: {{ stats.memory.used // (1024*1024) }} MB</li>
                 <li>Percent Used: {{ stats.memory.percent }}%</li>
-            </ul>
-            <p>Disk Usage:</p>
-            <ul>
-                <li>Total: {{ stats.disk.total // (1024*1024*1024) }} GB</li>
-                <li>Used: {{ stats.disk.used // (1024*1024*1024) }} GB</li>
-                <li>Free: {{ stats.disk.free // (1024*1024*1024) }} GB</li>
-                <li>Percent Used: {{ stats.disk.percent }}%</li>
             </ul>
             <p id="countdown">Next update in: 3.0 seconds</p>
             <script>

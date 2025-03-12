@@ -84,20 +84,20 @@ def video_feed(cam_id):
     else:
         return "Invalid camera", 404
 
-# Modified background function: emits frames over SocketIO for real-time streaming with distinct events.
+# New background function: emits frames over SocketIO for real-time streaming.
 def emit_frames():
     while True:
-        cameras = {0: (latest_frame_0, frame_0_lock)}
+        cameras = [(latest_frame_0, frame_0_lock)]
         if camera_1:
-            cameras[1] = (latest_frame_1, frame_1_lock)
-        for cam_id, (frame_container, lock) in cameras.items():
+            cameras.append((latest_frame_1, frame_1_lock))
+        for cam_id, (frame_container, lock) in enumerate(cameras):
             with lock:
                 frame = frame_container[0]
             if frame is not None:
                 ret, jpeg = cv2.imencode('.jpg', frame)
                 if ret:
                     jpg_as_text = base64.b64encode(jpeg.tobytes()).decode('utf-8')
-                    socketio.emit(f'video_frame_{cam_id}', {'frame': jpg_as_text})
+                    socketio.emit('video_frame', {'cam_id': cam_id, 'frame': jpg_as_text})
         time.sleep(0.005)  # minimal delay for near real-time updates
 
 # SocketIO event: start emitting frames on client connection.

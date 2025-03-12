@@ -8,8 +8,6 @@ app = Flask(__name__)
 # Initialize our cameras for device indices 0 and 1
 camera_0 = cv2.VideoCapture(0)
 camera_1 = cv2.VideoCapture(1)
-camera_2 = cv2.VideoCapture(2)
-camera_3 = cv2.VideoCapture(3)
 
 def gen(camera):
     while True:

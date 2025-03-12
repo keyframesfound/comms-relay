@@ -4,16 +4,24 @@ import psutil
 import os
 import time
 from threading import Lock, Thread
+from flask_socketio import SocketIO, emit
+import base64
+import threading
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Initialize our cameras for device indices 0 and 1 and optimize resolution for Raspberry Pi.
 camera_0 = cv2.VideoCapture(0)
-camera_1 = cv2.VideoCapture(1)
 camera_0.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 camera_0.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+camera_1 = cv2.VideoCapture(1)
+if not camera_1.isOpened():
+    camera_1 = None  # camera_1 not available
+else:
+    camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # Global containers for latest frames and their locks
 latest_frame_0 = [None]
@@ -69,13 +77,39 @@ def video_feed(cam_id):
     if cam_id == 0:
         return Response(gen_threaded(latest_frame_0, frame_0_lock), mimetype='multipart/x-mixed-replace; boundary=frame')
     elif cam_id == 1:
-        return Response(gen_threaded(latest_frame_1, frame_1_lock), mimetype='multipart/x-mixed-replace; boundary=frame')
+        if camera_1:
+            return Response(gen_threaded(latest_frame_1, frame_1_lock), mimetype='multipart/x-mixed-replace; boundary=frame')
+        else:
+            return "Camera not available", 404
     else:
         return "Invalid camera", 404
+
+# New background function: emits frames over SocketIO for real-time streaming.
+def emit_frames():
+    while True:
+        cameras = [(latest_frame_0, frame_0_lock)]
+        if camera_1:
+            cameras.append((latest_frame_1, frame_1_lock))
+        for cam_id, (frame_container, lock) in enumerate(cameras):
+            with lock:
+                frame = frame_container[0]
+            if frame is not None:
+                ret, jpeg = cv2.imencode('.jpg', frame)
+                if ret:
+                    jpg_as_text = base64.b64encode(jpeg.tobytes()).decode('utf-8')
+                    socketio.emit('video_frame', {'cam_id': cam_id, 'frame': jpg_as_text})
+        time.sleep(0.005)  # minimal delay for near real-time updates
+
+# SocketIO event: start emitting frames on client connection.
+@socketio.on('connect')
+def handle_connect():
+    threading.Thread(target=emit_frames, daemon=True).start()
+    emit('message', {'data': 'Connected and streaming video'})
 
 if __name__ == '__main__':
     # Start background threads to continuously capture frames.
     Thread(target=capture_frames, args=(camera_0, frame_0_lock, latest_frame_0), daemon=True).start()
-    Thread(target=capture_frames, args=(camera_1, frame_1_lock, latest_frame_1), daemon=True).start()
-    # Run the Flask app on Raspberry Pi's IP address and port 7900
-    app.run(host='0.0.0.0', port=7900, debug=False)
+    if camera_1:
+        Thread(target=capture_frames, args=(camera_1, frame_1_lock, latest_frame_1), daemon=True).start()
+    # Run the app with SocketIO to support WebSocket communication.
+    socketio.run(app, host='0.0.0.0', port=7900, debug=False)

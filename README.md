@@ -9,6 +9,11 @@ This project provides live video feeds and system statistics for a Raspberry Pi 
   - Each stream has a button to view in full screen.
   - Access via the `/?tab=cameras` URL parameter.
 
+- **Py Cameras Tab**:  
+  - Integrates Python-based camera feeds.
+  - Each stream can be viewed full screen.
+  - Access via the `/?tab=pycameras` URL parameter.
+
 - **Raspberry Pi Stats Tab**:  
   - Shows real-time CPU usage, temperature, and memory statistics.
   - Auto-refreshes every 3 seconds.
@@ -22,12 +27,14 @@ This project provides live video feeds and system statistics for a Raspberry Pi 
 1. Open your browser and navigate to the project URL.
 2. Use the navigation bar to switch between tabs.
 3. For video streams, click the **Full Screen** button to enlarge the view.
+4. Use the **Py Cameras** tab to access Python-based camera feeds.
 
 ## Setup
 
 - Ensure your Raspberry Pi is connected to the network.
-- The server must be running to serve the routes:
-  - `/video_feed` for the video streams.
+- The server must be running to serve the following routes:
+  - `/video_feed` for standard camera streams.
+  - `/video_feed_py` for Python camera streams.
   - `/` with appropriate query parameters for different tabs.
 
 ## Project Structure

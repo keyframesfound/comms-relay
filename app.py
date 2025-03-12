@@ -47,6 +47,10 @@ def video_feed(cam_id):
         return Response(gen(camera_0), mimetype='multipart/x-mixed-replace; boundary=frame')
     elif cam_id == 1:
         return Response(gen(camera_1), mimetype='multipart/x-mixed-replace; boundary=frame')
+    elif cam_id == 2:
+        return Response(gen(camera_2), mimetype='multipart/x-mixed-replace; boundary=frame')
+    elif cam_id == 3:
+        return Response(gen(camera_3), mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
         return "Invalid camera", 404
 

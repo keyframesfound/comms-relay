@@ -12,15 +12,19 @@ import subprocess
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Initialize our cameras for device indices 0 and 1 and optimize resolution for Raspberry Pi.
+# Initialize camera₀
 camera_0 = cv2.VideoCapture(0)
 camera_0.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 camera_0.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+if not camera_0.isOpened():
+    camera_0.release()
+    camera_0 = "fswebcam0"  # flag to use fswebcam for cam0
 
+# Initialize camera₁
 camera_1 = cv2.VideoCapture(1)
 if not camera_1.isOpened():
-    camera_1.release()  # release if not open
-    camera_1 = "fswebcam"  # flag to use fswebcam instead
+    camera_1.release()
+    camera_1 = "fswebcam"  # flag to use fswebcam for cam1
 else:
     camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -40,11 +44,11 @@ def capture_frames(camera, lock, frame_container):
                 frame_container[0] = frame
         time.sleep(0.005)  # reduced sleep for lower latency
 
-# New function: capture frames with fswebcam for camera1.
-def capture_fswebcam_frames(lock, frame_container):
+# Updated fswebcam capture function to support different devices.
+def capture_fswebcam_frames(lock, frame_container, device, tmp_file):
     while True:
-        subprocess.run(["fswebcam", "-d", "/dev/video1", "--no-banner", "-r", "640x480", "/tmp/camera1.jpg"])
-        frame = cv2.imread("/tmp/camera1.jpg")
+        subprocess.run(["fswebcam", "-d", device, "--no-banner", "-r", "640x480", tmp_file])
+        frame = cv2.imread(tmp_file)
         if frame is not None:
             with lock:
                 frame_container[0] = frame
@@ -120,10 +124,13 @@ def handle_connect():
 
 if __name__ == '__main__':
     # Start background threads to continuously capture frames.
-    Thread(target=capture_frames, args=(camera_0, frame_0_lock, latest_frame_0), daemon=True).start()
+    if camera_0 == "fswebcam0":
+        Thread(target=capture_fswebcam_frames, args=(frame_0_lock, latest_frame_0, "/dev/video0", "/tmp/camera0.jpg"), daemon=True).start()
+    else:
+        Thread(target=capture_frames, args=(camera_0, frame_0_lock, latest_frame_0), daemon=True).start()
     if camera_1 == "fswebcam":
-        Thread(target=capture_fswebcam_frames, args=(frame_1_lock, latest_frame_1), daemon=True).start()
-    elif camera_1:
+        Thread(target=capture_fswebcam_frames, args=(frame_1_lock, latest_frame_1, "/dev/video1", "/tmp/camera1.jpg"), daemon=True).start()
+    else:
         Thread(target=capture_frames, args=(camera_1, frame_1_lock, latest_frame_1), daemon=True).start()
     # Run the app with SocketIO to support WebSocket communication.
     socketio.run(app, host='0.0.0.0', port=7900, debug=False)

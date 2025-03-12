@@ -53,10 +53,13 @@ def gen_threaded(frame_container, lock):
         time.sleep(0.005)  # reduced sleep for lower latency
 
 def get_cpu_temperature():
+    temp_path = "/sys/class/thermal/thermal_zone0/temp"
+    if not os.path.isfile(temp_path):
+        return None
     try:
-        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+        with open(temp_path, "r") as f:
             temp_str = f.read().strip()
-            return float(temp_str)/1000.0
+            return float(temp_str) / 1000.0
     except Exception:
         return None
 

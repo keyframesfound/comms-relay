@@ -22,11 +22,12 @@
     </div>
     <div class="container">
         {% if tab == 'cameras' %}
-            <!-- Cameras tab: display two video streams side by side -->
+            <!-- Cameras tab: display two camera streams on 1 page -->
             <h2>Cameras</h2>
             <div style="display: flex; justify-content: center; align-items: center;">
-                <img class="video" src="{{ url_for('video_feed', cam_id=0) }}" alt="Camera 0">
-                <img class="video" src="{{ url_for('video_feed', cam_id=1) }}" alt="Camera 1">
+                <!-- Use combined_feed endpoint which auto-fallback on failure -->
+                <img class="video" src="{{ url_for('combined_feed', cam_id=0) }}" alt="Camera 0">
+                <img class="video" src="{{ url_for('combined_feed', cam_id=1) }}" alt="Camera 1">
             </div>
         {% elif tab == 'stats' %}
             <!-- Raspberry Pi stats tab: display CPU, memory, and temperature -->

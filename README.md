@@ -45,4 +45,32 @@ This project provides live video feeds and system statistics for a Raspberry Pi 
 - **Server Code**
   - (Refer to your project-specific files and documentation for backend implementation.)
 
+## New Picamera2 Endpoints
+
+- **/pi_image**  
+  Captures a still image from the Pi Camera using Picamera2.
+
+- **/pi_mjpeg**  
+  Streams MJPEG video from the Pi Camera using Picamera2.
+
+## Installation Guide
+
+1. Connect your camera to the Raspberry Pi.
+2. Install Picamera2 library:
+   ```
+   sudo apt-get update
+   sudo apt-get install python3-picamera2
+   ```
+3. Set up the project environment:
+   ```
+   mkdir camera-app
+   cd camera-app
+   python3 -m venv --system-site-packages venv
+   source venv/bin/activate
+   ```
+4. Test the camera using the sample script in `/comms-relay/main.py`:
+   ```
+   python main.py
+   ```
+
 <!-- ...additional project setup information... -->

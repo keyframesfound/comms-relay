@@ -50,7 +50,7 @@ def gen_threaded(frame_container, lock):
             continue
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-        time.sleep(0.005)  # reduced sleep for lower latency
+        time.sleep(0.0005)  # reduced sleep for lower latency
 
 def get_cpu_temperature():
     temp_path = "/sys/class/thermal/thermal_zone0/temp"

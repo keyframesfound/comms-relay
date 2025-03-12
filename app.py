@@ -77,5 +77,5 @@ if __name__ == '__main__':
     # Start background threads to continuously capture frames.
     Thread(target=capture_frames, args=(camera_0, frame_0_lock, latest_frame_0), daemon=True).start()
     Thread(target=capture_frames, args=(camera_1, frame_1_lock, latest_frame_1), daemon=True).start()
-    # Run the Flask app on Raspberry Pi's IP address and port 5000
+    # Run the Flask app on Raspberry Pi's IP address and port 7900
     app.run(host='0.0.0.0', port=7900, debug=False)

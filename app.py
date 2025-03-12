@@ -28,7 +28,7 @@ def capture_frames(camera, lock, frame_container):
         if ret:
             with lock:
                 frame_container[0] = frame
-        time.sleep(0.03)  # slight delay to reduce CPU usage
+        time.sleep(0.005)  # reduced sleep for lower latency
 
 # New generator: deliver the latest captured frame.
 def gen_threaded(frame_container, lock):
@@ -42,7 +42,7 @@ def gen_threaded(frame_container, lock):
             continue
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-        time.sleep(0.03)
+        time.sleep(0.005)  # reduced sleep for lower latency
 
 def get_cpu_temperature():
     try:

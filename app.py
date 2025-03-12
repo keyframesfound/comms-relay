@@ -7,6 +7,7 @@ from threading import Lock, Thread
 from flask_socketio import SocketIO, emit
 import base64
 import threading
+import subprocess
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -18,7 +19,8 @@ camera_0.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 camera_1 = cv2.VideoCapture(1)
 if not camera_1.isOpened():
-    camera_1 = None  # camera_1 not available
+    camera_1.release()  # release if not open
+    camera_1 = "fswebcam"  # flag to use fswebcam instead
 else:
     camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -37,6 +39,16 @@ def capture_frames(camera, lock, frame_container):
             with lock:
                 frame_container[0] = frame
         time.sleep(0.005)  # reduced sleep for lower latency
+
+# New function: capture frames with fswebcam for camera1.
+def capture_fswebcam_frames(lock, frame_container):
+    while True:
+        subprocess.run(["fswebcam", "-d", "/dev/video1", "--no-banner", "-r", "640x480", "/tmp/camera1.jpg"])
+        frame = cv2.imread("/tmp/camera1.jpg")
+        if frame is not None:
+            with lock:
+                frame_container[0] = frame
+        time.sleep(0.005)
 
 # New generator: deliver the latest captured frame.
 def gen_threaded(frame_container, lock):
@@ -109,7 +121,9 @@ def handle_connect():
 if __name__ == '__main__':
     # Start background threads to continuously capture frames.
     Thread(target=capture_frames, args=(camera_0, frame_0_lock, latest_frame_0), daemon=True).start()
-    if camera_1:
+    if camera_1 == "fswebcam":
+        Thread(target=capture_fswebcam_frames, args=(frame_1_lock, latest_frame_1), daemon=True).start()
+    elif camera_1:
         Thread(target=capture_frames, args=(camera_1, frame_1_lock, latest_frame_1), daemon=True).start()
     # Run the app with SocketIO to support WebSocket communication.
     socketio.run(app, host='0.0.0.0', port=7900, debug=False)

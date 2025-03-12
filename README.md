@@ -73,4 +73,40 @@ This project provides live video feeds and system statistics for a Raspberry Pi 
    python main.py
    ```
 
+## Installation
+
+1. **Update your package list:**
+   ```bash
+   sudo apt-get update
+   ```
+
+2. **Install system dependencies:**
+   ```bash
+   sudo apt-get install python3 python3-pip libopencv-dev
+   ```
+
+3. **Install Python dependencies:**
+   ```bash
+   pip3 install flask opencv-python psutil
+   ```
+
+4. **Camera Setup:**
+   - Make sure your Raspberry Pi cameras are connected and recognized as `/dev/video0` and `/dev/video1`.
+   - The app sets a resolution of 640x480 for performance on the Pi. Adjust in the code if needed.
+
+## Running the Application
+
+Start the Flask server by running:
+```bash
+python3 app.py
+```
+Then access the stream at:
+```
+http://<your_pi_ip>:7900/video_feed/0
+```
+or
+```
+http://<your_pi_ip>:7900/video_feed/1
+```
+
 <!-- ...additional project setup information... -->

@@ -12,6 +12,36 @@
         .navbar a:hover { background-color: #ddd; color: black; }
         .container { padding: 20px; }
         .video { width: 45%; margin: 2.5%; }
+        .video-container {
+            max-width: 640px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .video-container img {
+            width: 100%;
+            height: auto;
+        }
+        :fullscreen .video-container img,
+        :-webkit-full-screen .video-container img,
+        :-ms-fullscreen .video-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        /* When container enters full screen, stretch container and its image */
+        .video-container:fullscreen,
+        .video-container:-webkit-full-screen,
+        .video-container:-ms-fullscreen {
+            width: 100%;
+            height: 100%;
+        }
+        .video-container:fullscreen img,
+        .video-container:-webkit-full-screen img,
+        .video-container:-ms-fullscreen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
@@ -22,12 +52,17 @@
     </div>
     <div class="container">
         {% if tab == 'cameras' %}
-            <!-- Cameras tab: display two camera streams on 1 page -->
+            <!-- Cameras tab: display two video streams side by side -->
             <h2>Cameras</h2>
             <div style="display: flex; justify-content: center; align-items: center;">
-                <!-- Use combined_feed endpoint which auto-fallback on failure -->
-                <img class="video" src="{{ url_for('combined_feed', cam_id=0) }}" alt="Camera 0">
-                <img class="video" src="{{ url_for('combined_feed', cam_id=1) }}" alt="Camera 1">
+                <div class="video-container">
+                    <img class="video" src="{{ url_for('video_feed', cam_id=0) }}" alt="Camera 0">
+                    <button onclick="openFullscreen(this)">Full Screen</button>
+                </div>
+                <div class="video-container">
+                    <img class="video" src="{{ url_for('video_feed', cam_id=1) }}" alt="Camera 1">
+                    <button onclick="openFullscreen(this)">Full Screen</button>
+                </div>
             </div>
         {% elif tab == 'stats' %}
             <!-- Raspberry Pi stats tab: display CPU, memory, and temperature -->
@@ -62,5 +97,17 @@
             <p>Content coming soon!</p>
         {% endif %}
     </div>
+    <script>
+        function openFullscreen(btn) {
+            var container = btn.parentElement;
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) { /* Safari */
+                container.webkitRequestFullscreen();
+            } else if (container.msRequestFullscreen) { /* IE11 */
+                container.msRequestFullscreen();
+            }
+        }
+    </script>
 </body>
 </html>

@@ -24,10 +24,8 @@ This project provides live video feeds and system statistics for a Raspberry Pi 
 
 ## Usage
 
-1. Open your browser and navigate to the project URL.
-2. Use the navigation bar to switch between tabs.
-3. For video streams, click the **Full Screen** button to enlarge the view.
-4. Use the **Py Cameras** tab to access Python-based camera feeds.
+1. app.py refers to the normal MacOS version
+2. raspberry.py refers to the RaspberryPi version 
 
 ## Setup
 

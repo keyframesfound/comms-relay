@@ -7,21 +7,23 @@ from threading import Lock, Thread
 from flask_socketio import SocketIO, emit
 import base64
 import threading
+from picamera import PiCamera
+from picamera.array import PiRGBArray
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Initialize our cameras for device indices 0 and 1 and optimize resolution for Raspberry Pi.
-camera_0 = cv2.VideoCapture(0)
-camera_0.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-camera_0.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+# Replace old USB camera initialization with Raspberry Pi camera setup.
+camera_0 = PiCamera()
+camera_0.resolution = (640, 480)
+raw_capture_0 = PiRGBArray(camera_0, size=(640,480))
 
-camera_1 = cv2.VideoCapture(1)
-if not camera_1.isOpened():
-    camera_1 = None  # camera_1 not available
-else:
-    camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+try:
+    camera_1 = PiCamera()
+    camera_1.resolution = (640, 480)
+    raw_capture_1 = PiRGBArray(camera_1, size=(640,480))
+except Exception:
+    camera_1 = None
 
 # Global containers for latest frames and their locks
 latest_frame_0 = [None]
@@ -29,14 +31,14 @@ latest_frame_1 = [None]
 frame_0_lock = Lock()
 frame_1_lock = Lock()
 
-# New function: continuously capture frames in a background thread.
-def capture_frames(camera, lock, frame_container):
-    while True:
-        ret, frame = camera.read()
-        if ret:
-            with lock:
-                frame_container[0] = frame
-        time.sleep(0.005)  # reduced sleep for lower latency
+# Modify the capture function to use PiCamera's capture_continuous
+def capture_frames(camera, raw_capture, lock, frame_container):
+    for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
+        image = frame.array
+        with lock:
+            frame_container[0] = image
+        raw_capture.truncate(0)
+        time.sleep(0.005)
 
 # New generator: deliver the latest captured frame.
 def gen_threaded(frame_container, lock):
@@ -50,7 +52,7 @@ def gen_threaded(frame_container, lock):
             continue
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-        time.sleep(0.0005)  # reduced sleep for lower latency
+        time.sleep(0.005)  # reduced sleep for lower latency
 
 def get_cpu_temperature():
     temp_path = "/sys/class/thermal/thermal_zone0/temp"
@@ -111,8 +113,8 @@ def handle_connect():
 
 if __name__ == '__main__':
     # Start background threads to continuously capture frames.
-    Thread(target=capture_frames, args=(camera_0, frame_0_lock, latest_frame_0), daemon=True).start()
+    Thread(target=capture_frames, args=(camera_0, raw_capture_0, frame_0_lock, latest_frame_0), daemon=True).start()
     if camera_1:
-        Thread(target=capture_frames, args=(camera_1, frame_1_lock, latest_frame_1), daemon=True).start()
+        Thread(target=capture_frames, args=(camera_1, raw_capture_1, frame_1_lock, latest_frame_1), daemon=True).start()
     # Run the app with SocketIO to support WebSocket communication.
     socketio.run(app, host='0.0.0.0', port=7900, debug=False)
